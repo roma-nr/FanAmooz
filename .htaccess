@@ -1,0 +1,10 @@
+# فن‌آموز — Apache (XAMPP)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # امنیت: مسدود کردن دسترسی به پوشه includes
+    RewriteRule ^includes/ - [F,L]
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^sql/ - [F,L]
+</IfModule>
+
+DirectoryIndex index.php

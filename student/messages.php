@@ -21,9 +21,7 @@ require dirname(__DIR__) . '/includes/layout/student_header.php';
     <?php endif; ?>
 </h1>
 
-<?php if (!phase6_tables_ready()): ?>
-    <div class="alert alert-warning">ابتدا <a href="<?= e(base_url('migrate_phase6.php')) ?>">migrate_phase6.php</a> را اجرا کنید.</div>
-<?php elseif (!$courses): ?>
+<?php if (!$courses): ?>
     <div class="alert alert-info">در دوره فعالی ثبت‌نام نکرده‌اید یا هنوز پیامی رد و بدل نشده است.</div>
 <?php else: ?>
     <div class="list-group shadow-sm">

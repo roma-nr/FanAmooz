@@ -122,21 +122,22 @@ $activeMenu = $activeMenu ?? '';
     <nav class="nav flex-column px-2">
         <?php
                 $menu = [
-                    'dashboard' => ['index.php', 'داشبورد', 'bi-grid'],
-                    'provinces' => ['provinces.php', 'استان‌ها', 'bi-map'],
-                    'institutions' => ['institutions.php', 'دانشکده‌ها', 'bi-building'],
-                    'students' => ['students.php', 'دانشجویان', 'bi-people'],
-                    'teachers_list' => ['teachers.php', 'اساتید', 'bi-person-badge'],
-                    'teachers' => ['teacher_applications.php', 'درخواست همکاری', 'bi-inbox'],
-                    'announcements' => ['announcements.php', 'اطلاعیه‌ها', 'bi-megaphone'],
-                    'links' => ['useful_links.php', 'لینک‌های مفید', 'bi-link-45deg'],
-                    'courses' => ['courses.php', 'دوره‌ها', 'bi-book'],
-                    'certificates' => ['certificates.php', 'گواهی‌ها', 'bi-award'],
-                    'reports' => ['reports.php', 'گزارش‌ها', 'bi-bar-chart'],
-                    'settings' => ['settings.php', 'تنظیمات سایت', 'bi-gear'],
-                    'reports' => ['error_reports.php', 'گزارش‌های خطا', 'bi-exclamation-triangle'],
-					'payments_offline' => ['pending_payments.php', 'تراکنش‌های آفلاین', 'bi-credit-card-2-back'],
-                ];
+    'dashboard'       => ['index.php', 'داشبورد', 'bi-grid'],
+    'provinces'       => ['provinces.php', 'استان‌ها', 'bi-map'],
+    'institutions'    => ['institutions.php', 'دانشکده‌ها', 'bi-building'],
+    'students'        => ['students.php', 'دانشجویان', 'bi-people'],
+    'teachers_list'   => ['teachers.php', 'اساتید', 'bi-person-badge'],
+    'teachers'        => ['teacher_applications.php', 'درخواست همکاری', 'bi-inbox'],
+    'announcements'   => ['announcements.php', 'اطلاعیه‌ها', 'bi-megaphone'],
+    'links'           => ['useful_links.php', 'لینک‌های مفید', 'bi-link-45deg'],
+    'courses'         => ['courses.php', 'دوره‌ها', 'bi-book'],
+    'certificates'    => ['certificates.php', 'گواهی‌ها', 'bi-award'],
+    
+	'analytical_reports' => ['analytics.php', 'گزارش‌های تحلیلی', 'bi-bar-chart'],
+'error_reports'      => ['error_reports.php', 'گزارش‌های خطا', 'bi-exclamation-triangle'],
+    'payments_offline'=> ['pending_payments.php', 'تراکنش‌های آفلاین', 'bi-credit-card-2-back'],
+    'settings'        => ['settings.php', 'تنظیمات سایت', 'bi-gear'],
+];
                 foreach ($menu as $key => [$file, $label, $icon]):
                     $active = $activeMenu === $key ? 'active' : '';
                 ?>

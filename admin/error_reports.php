@@ -4,7 +4,8 @@ require_once dirname(__DIR__) . '/includes/bootstrap.php';
 require_auth('admin');
 
 $pageTitle = 'گزارش‌های خطا';
-$activeMenu = 'reports';
+
+$activeMenu = 'error_reports';
 $errors = [];
 
 // تغییر وضعیت گزارش

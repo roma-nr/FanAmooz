@@ -53,10 +53,6 @@ require dirname(__DIR__) . '/includes/layout/student_header.php';
 <h1 class="h4 text-primary mb-3">گفتگو با استاد — <?= e($course['title']) ?></h1>
 <?php if ($msg = flash('error')): ?><div class="alert alert-danger"><?= e($msg) ?></div><?php endif; ?>
 
-<?php if (!phase6_tables_ready()): ?>
-    <div class="alert alert-warning">سیستم چت فعال نیست.</div>
-<?php else: ?>
-    <?php require dirname(__DIR__) . '/includes/layout/chat_panel.php'; ?>
-<?php endif; ?>
+<?php require dirname(__DIR__) . '/includes/layout/chat_panel.php'; ?>
 
 <?php require dirname(__DIR__) . '/includes/layout/student_footer.php'; ?>

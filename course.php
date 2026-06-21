@@ -36,6 +36,14 @@ if ($isLoggedIn) {
 require __DIR__ . '/includes/layout/header.php';
 ?>
 
+<style>
+/* سایدبار چسبان با کمی فاصله از بالا */
+.sidebar-sticky {
+    position: sticky;
+    top: 90px; /* می‌توانید بر اساس ارتفاع هدر تنظیم کنید */
+}
+</style>
+
 <section class="service-details-wrap ptb-100">
     <div class="container">
         <div class="row">
@@ -56,9 +64,8 @@ require __DIR__ . '/includes/layout/header.php';
                     </div>
 
                     <div class="course-info mt-4">
-                        
                         <p><strong>حداقل نمره قبولی:</strong> <?= e($course['min_pass_grade']) ?></p>
-                        <p><strong>قیمت:</strong> 
+                        <p><strong>هزینه:</strong> 
                             <?php if ((int) $course['is_paid']): ?>
                                 <?= e(format_price($course['price'])) ?>
                             <?php else: ?>
@@ -91,9 +98,10 @@ require __DIR__ . '/includes/layout/header.php';
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- سایدبار چسبان -->
             <div class="col-xl-4">
-                <!-- سایدبار (بدون تغییر) -->
-                <div class="sidebar">
+                <div class="sidebar sidebar-sticky">
                     <div class="sidebar-widget categories">
                         <h4>اطلاعات دوره</h4>
                         <ul class="list-style">
@@ -113,7 +121,6 @@ require __DIR__ . '/includes/layout/header.php';
                         <a href="mailto:<?= e(setting('contact_email')) ?>"><?= e(setting('contact_email')) ?></a>
                         <a href="<?= e(base_url('contact.php')) ?>" class="btn style1">تماس با ما</a>
                     </div>
-                    <!-- دوره‌های مشابه (بدون تغییر) -->
                     <?php
                     $similarStmt = db()->prepare("
                         SELECT id, title, slug, image FROM courses

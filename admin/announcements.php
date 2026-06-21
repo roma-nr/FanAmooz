@@ -96,7 +96,7 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
 
                     <div class="mb-2">
                         <label class="form-label">خلاصه</label>
-                        <textarea name="summary" class="form-control" rows="2"><?= old('summary', $edit['summary'] ?? '') ?></textarea>
+                        <input name="summary" class="form-control" rows="2"><?= old('summary', $edit['summary'] ?? '') ?></input>
                     </div>
 
                     <div class="mb-2">
@@ -129,10 +129,7 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
                         <input class="form-check-input" type="checkbox" name="is_active" value="1" id="ia" <?= ((int)($edit['is_active'] ?? 1) === 1) ? 'checked' : '' ?>>
                         <label class="form-check-label" for="ia">فعال</label>
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="show_on_home" value="1" id="sh" <?= ((int)($edit['show_on_home'] ?? 1) === 1) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="sh">نمایش در کروسل صفحه اصلی</label>
-                    </div>
+                    
 
                     <button class="btn btn-primary"><?= $edit ? 'ذخیره' : 'افزودن' ?></button>
                     <?php if ($edit): ?><a href="announcements.php" class="btn btn-link">انصراف</a><?php endif; ?>

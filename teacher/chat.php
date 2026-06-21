@@ -52,11 +52,7 @@ require dirname(__DIR__) . '/includes/layout/teacher_header.php';
 <h1 class="h4 mb-3">گفتگو با دانشجویان — <?= e($course['title']) ?></h1>
 <?php if ($msg = flash('error')): ?><div class="alert alert-danger"><?= e($msg) ?></div><?php endif; ?>
 
-<?php if (!phase6_tables_ready()): ?>
-    <div class="alert alert-warning">سیستم چت فعال نیست.</div>
-<?php else: ?>
-    <p class="small text-muted">پیام‌ها برای دانشجویان ثبت‌نام‌شده در این دوره نمایش داده می‌شود.</p>
-    <?php require dirname(__DIR__) . '/includes/layout/chat_panel.php'; ?>
-<?php endif; ?>
+<p class="small text-muted">پیام‌ها برای دانشجویان ثبت‌نام‌شده در این دوره نمایش داده می‌شود.</p>
+<?php require dirname(__DIR__) . '/includes/layout/chat_panel.php'; ?>
 
 <?php require dirname(__DIR__) . '/includes/layout/teacher_footer.php'; ?>

@@ -246,8 +246,8 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
                     <!-- برنامه زمانی -->
                     <div class="mb-3 mt-2">
                         <label class="form-label">برنامه زمانی (روز و ساعت جلسات)</label>
-                        <textarea name="schedule_notes" class="form-control" rows="2" 
-                                  placeholder="مثلاً شنبه و سه‌شنبه ۱۶ تا ۱۸"><?= old('schedule_notes', $edit['schedule_notes'] ?? '') ?></textarea>
+                        <input name="schedule_notes" class="form-control" rows="2" 
+                                  placeholder="مثلاً شنبه و سه‌شنبه ۱۶ تا ۱۸"><?= old('schedule_notes', $edit['schedule_notes'] ?? '') ?></input>
                     </div>
 
                     <!-- وضعیت و حداقل نمره -->

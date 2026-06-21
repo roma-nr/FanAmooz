@@ -6,8 +6,7 @@ function phase6_tables_ready(): bool
 {
     try {
         db()->query('SELECT 1 FROM course_messages LIMIT 1');
-        db()->query('SELECT 1 FROM live_sessions LIMIT 1');
-
+        // دیگر جدول live_sessions بررسی نشود
         return true;
     } catch (PDOException) {
         return false;
@@ -63,76 +62,26 @@ function validate_url(string $url): bool
         && preg_match('#^https?://#i', $url);
 }
 
+// توابع زیر دیگر به جدول live_sessions وابسته نیستند
+// و به صورت موقت یک آرایه خالی برمی‌گردانند تا خطایی رخ ندهد
 function course_live_sessions(int $courseId, bool $includeCancelled = false): array
 {
-    if (!phase6_tables_ready()) {
-        return [];
-    }
-    $sql = 'SELECT * FROM live_sessions WHERE course_id = ?';
-    if (!$includeCancelled) {
-        $sql .= ' AND is_cancelled = 0';
-    }
-    $sql .= ' ORDER BY scheduled_at ASC';
-    $stmt = db()->prepare($sql);
-    $stmt->execute([$courseId]);
-
-    return $stmt->fetchAll();
+    // جدول live_sessions حذف شده است
+    return [];
 }
 
 function live_session_by_id(int $id, int $courseId): ?array
 {
-    $stmt = db()->prepare('SELECT * FROM live_sessions WHERE id = ? AND course_id = ? LIMIT 1');
-    $stmt->execute([$id, $courseId]);
-
-    $row = $stmt->fetch();
-
-    return $row ?: null;
+    return null;
 }
 
-/**
- * @return array<int, array<string, mixed>>
- */
 function student_live_sessions_all(int $userId, ?string $filter = null): array
 {
-    if (!phase6_tables_ready()) {
-        return [];
-    }
-
-    $sql = "SELECT ls.*, c.title AS course_title, c.slug AS course_slug, u.full_name AS teacher_name
-            FROM live_sessions ls
-            INNER JOIN courses c ON c.id = ls.course_id
-            LEFT JOIN users u ON u.id = c.teacher_id
-            INNER JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
-                AND e.status IN ('active','completed')
-            WHERE ls.is_cancelled = 0";
-    $params = [$userId];
-
-    if ($filter === 'upcoming') {
-        $sql .= ' AND ls.scheduled_at >= NOW()';
-    } elseif ($filter === 'past') {
-        $sql .= ' AND DATE_ADD(ls.scheduled_at, INTERVAL ls.duration_minutes MINUTE) < NOW()';
-    } elseif ($filter === 'today') {
-        $sql .= ' AND DATE(ls.scheduled_at) = CURDATE()';
-    }
-
-    $sql .= ' ORDER BY ls.scheduled_at ASC LIMIT 100';
-    $stmt = db()->prepare($sql);
-    $stmt->execute($params);
-
-    return $stmt->fetchAll();
+    return [];
 }
 
 function student_next_live_session(int $userId): ?array
 {
-    $rows = student_live_sessions_all($userId, 'upcoming');
-    $now = time();
-    foreach ($rows as $row) {
-        $status = live_session_status($row);
-        if ($status === 'upcoming' || $status === 'live') {
-            return $row;
-        }
-    }
-
     return null;
 }
 

@@ -269,18 +269,15 @@ require dirname(__DIR__) . '/includes/layout/student_header.php';
 
 <?php elseif ($tab === 'chat'): ?>
     <p class="mb-2"><a href="<?= e(base_url('student/chat.php?course_id=' . $courseId)) ?>" class="small">باز کردن در صفحه کامل</a></p>
-    <?php if (!phase6_tables_ready()): ?>
-        <div class="alert alert-warning">سیستم چت فعال نیست. migrate_phase6.php را اجرا کنید.</div>
-    <?php else: ?>
-        <?php
-        $chatPostUrl = base_url('student/my_course.php?slug=' . urlencode($slug) . '&tab=chat');
-        $chatApiUrl = base_url('api/chat_messages.php?course_id=' . $courseId);
-        $chatUserId = $userId;
-        $chatCourseId = $courseId;
-        $chatMessages = $messages;
-        require dirname(__DIR__) . '/includes/layout/chat_panel.php';
-        ?>
-    <?php endif; ?>
+    <?php
+    // پنل چت مستقیماً نمایش داده شود (بدون شرط migrate)
+    $chatPostUrl = base_url('student/my_course.php?slug=' . urlencode($slug) . '&tab=chat');
+    $chatApiUrl = base_url('api/chat_messages.php?course_id=' . $courseId);
+    $chatUserId = $userId;
+    $chatCourseId = $courseId;
+    $chatMessages = $messages;
+    require dirname(__DIR__) . '/includes/layout/chat_panel.php';
+    ?>
 
 <?php elseif ($tab === 'certificate'): ?>
     <div class="card border-0 shadow-sm">

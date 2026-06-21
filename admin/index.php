@@ -88,7 +88,7 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
             <div class="card-body d-flex flex-column">
                 <h2 class="h6">گزارش‌های تحلیلی</h2>
                 <p class="small text-muted flex-grow-1">ثبت‌نام، علاقه‌مندی، پرداخت و گواهی</p>
-                <a href="<?= e(base_url('admin/reports.php')) ?>" class="btn btn-primary btn-sm">مشاهده گزارش‌ها</a>
+                <a href="<?= e(base_url('admin/analytics.php')) ?>" class="btn btn-primary btn-sm">مشاهده گزارش‌ها</a>
             </div>
         </div>
     </div>
@@ -101,7 +101,7 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
             <a href="<?= e(base_url('admin/students.php')) ?>" class="btn btn-outline-primary btn-sm">دانشجویان</a>
             <a href="<?= e(base_url('admin/courses.php')) ?>" class="btn btn-outline-primary btn-sm">دوره‌ها</a>
             <a href="<?= e(base_url('admin/certificates.php')) ?>" class="btn btn-outline-primary btn-sm">گواهی‌ها</a>
-            <a href="<?= e(base_url('admin/reports.php')) ?>" class="btn btn-outline-primary btn-sm">گزارش‌ها</a>
+            <a href="<?= e(base_url('admin/analytics.php')) ?>" class="btn btn-outline-primary btn-sm">گزارش‌ها</a>
             <a href="<?= e(base_url('admin/settings.php')) ?>" class="btn btn-outline-secondary btn-sm">تنظیمات</a>
         </div>
     </div>

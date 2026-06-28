@@ -129,6 +129,37 @@ $items = db()->query("
 require dirname(__DIR__) . '/includes/layout/admin_header.php';
 ?>
 
+<style>
+/* اصلاح اندازه و فونت تقویم جلالی */
+jdp-container {
+    font-size: 12px !important;
+}
+jdp-container .jdp-day,
+jdp-container .jdp-day-name {
+    height: 28px !important;
+    line-height: 28px !important;
+}
+jdp-container .jdp-month select,
+jdp-container .jdp-year select,
+jdp-container .jdp-time select {
+    font-size: 12px !important;
+    padding: 2px 4px !important;
+    transition: none !important;
+}
+/* حذف افکت hover که چشمک می‌زند */
+jdp-container .jdp-month:hover,
+jdp-container .jdp-year:hover {
+    filter: none !important;
+}
+/* مخفی کردن اسپینر input عددی سال */
+jdp-container .jdp-year input[type="number"]::-webkit-inner-spin-button,
+jdp-container .jdp-year input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.ts-control{ background-position: left .75rem center !important; }
+</style>
+
 <h1 class="h3 mb-4">مدیریت دوره‌ها</h1>
 
 <?php if (!empty($errors['general'])): ?>
@@ -224,7 +255,7 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
                         <textarea name="description" class="form-control tinymce" rows="4"><?= old('description', $edit['description'] ?? '') ?></textarea>
                     </div>
 
-                    <!-- تاریخ‌ها و تعداد جلسات -->
+                    <!-- تاریخ‌ها: دو فیلد مجزا (شروع / پایان) -->
                     <div class="row g-2">
                         <div class="col-4">
                             <label class="form-label">تعداد جلسات</label>
@@ -232,22 +263,26 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
                                    value="<?= old('session_count', $edit['session_count'] ?? 0) ?>">
                         </div>
                         <div class="col-4">
-                            <label class="form-label">تاریخ شروع</label>
-                            <input type="date" name="start_date" class="form-control" 
-                                   value="<?= old('start_date', $edit['start_date'] ?? '') ?>">
+                            <label class="form-label">تاریخ شروع <span class="text-danger">*</span></label>
+                            <input type="text" id="course-start-date" class="form-control" placeholder="انتخاب ..."
+                                   value="<?= $edit && $edit['start_date'] ? jdate('Y/m/d', strtotime($edit['start_date'])) : '' ?>"
+                                   autocomplete="off">
+                            <input type="hidden" name="start_date" id="start_date" value="<?= e($edit['start_date'] ?? '') ?>">
                         </div>
                         <div class="col-4">
-                            <label class="form-label">تاریخ پایان</label>
-                            <input type="date" name="end_date" class="form-control" 
-                                   value="<?= old('end_date', $edit['end_date'] ?? '') ?>">
+                            <label class="form-label">تاریخ پایان <span class="text-danger">*</span></label>
+                            <input type="text" id="course-end-date" class="form-control" placeholder="انتخاب ..."
+                                   value="<?= $edit && $edit['end_date'] ? jdate('Y/m/d', strtotime($edit['end_date'])) : '' ?>"
+                                   autocomplete="off">
+                            <input type="hidden" name="end_date" id="end_date" value="<?= e($edit['end_date'] ?? '') ?>">
                         </div>
                     </div>
 
                     <!-- برنامه زمانی -->
                     <div class="mb-3 mt-2">
                         <label class="form-label">برنامه زمانی (روز و ساعت جلسات)</label>
-                        <input name="schedule_notes" class="form-control" rows="2" 
-                                  placeholder="مثلاً شنبه و سه‌شنبه ۱۶ تا ۱۸"><?= old('schedule_notes', $edit['schedule_notes'] ?? '') ?></input>
+                        <textarea name="schedule_notes" class="form-control" rows="2" 
+                                  placeholder="مثلاً شنبه و سه‌شنبه ۱۶ تا ۱۸"><?= old('schedule_notes', $edit['schedule_notes'] ?? '') ?></textarea>
                     </div>
 
                     <!-- وضعیت و حداقل نمره -->
@@ -329,6 +364,7 @@ require dirname(__DIR__) . '/includes/layout/admin_header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ---------- بخش قیمت ----------
     const paidRadio = document.getElementById('paidRadio');
     const freeRadio = document.getElementById('freeRadio');
     const priceField = document.getElementById('priceField');
@@ -349,6 +385,46 @@ document.addEventListener('DOMContentLoaded', function() {
         freeRadio.addEventListener('change', function() { if (this.checked) togglePrice(false); });
         togglePrice(paidRadio.checked);
     }
+
+    // ---------- تقویم‌های جلالی (دو فیلد مستقل) ----------
+    function zeroPad(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    // تابع کمکی برای تنظیم یک Datepicker و ذخیره در hidden input
+    function setupDatepicker(inputId, hiddenId) {
+        var input = document.getElementById(inputId);
+        var hidden = document.getElementById(hiddenId);
+        if (!input || !hidden) return;
+
+        // مقدار اولیه
+        var initialDate = null;
+        if (hidden.value) {
+            // تبدیل میلادی به جلالی برای نمایش (با jdate در PHP قبلاً پر شده، ولی ما اینجا مستقیم از hidden می‌خوانیم)
+            // hidden.value میلادی است، ولی jalaliDatepicker خودش آن را تشخیص می‌دهد و در input نمایش می‌دهد.
+            // بنابراین فقط hidden.value را به عنوان مقدار اولیه به input می‌دهیم.
+            // اما jalaliDatepicker ورودی را به صورت جلالی نمایش می‌دهد، پس باید از طریق setValue انجام دهیم.
+            // روش بهتر: input را با مقدار جلالی (که با jdate در value نوشته شده) پر می‌کنیم، hidden هم میلادی دارد.
+            // در HTML ما value جلالی را با jdate گذاشته‌ایم، و hidden میلادی. پس خوب است.
+        }
+
+        jalaliDatepicker.startWatch({
+            selector: '#' + inputId,
+            type: 'single',
+            onChange: function(e) {
+                if (e._date) {
+                    var g = e._date.toGregorian();
+                    hidden.value = g.year + '-' + zeroPad(g.month) + '-' + zeroPad(g.day);
+                } else {
+                    hidden.value = '';
+                }
+            }
+        });
+    }
+
+    // راه‌اندازی برای شروع و پایان
+    setupDatepicker('course-start-date', 'start_date');
+    setupDatepicker('course-end-date', 'end_date');
 });
 </script>
 

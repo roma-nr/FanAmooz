@@ -34,6 +34,21 @@ $activeMenu = $activeMenu ?? '';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="<?= e(asset_url('css/theme.css')) ?>" rel="stylesheet">
     <?php require __DIR__ . '/head_extras.php'; ?>
+
+
+<link rel="stylesheet" href="<?= asset_url('css/jalalidatepicker.min.css') ?>">
+<script src="<?= asset_url('js/jalalidatepicker.min.js') ?>"></script>
+             
+			 <style>
+/* اصلاح سایز فونت در تقویم جلالی */
+jdp-container { font-size: 12px; }
+jdp-container .jdp-day, jdp-container .jdp-day-name { height: 28px; line-height: 28px; }
+jdp-container .jdp-month select, jdp-container .jdp-year select, jdp-container .jdp-time select { font-size: 10px; padding: 2px 4px; transition: none !important; }
+jdp-container .jdp-month:hover, jdp-container .jdp-year:hover { filter: none !important; }
+/* مخفی کردن اسپینر input عددی سال */
+jdp-container .jdp-year input[type="number"]::-webkit-inner-spin-button,
+jdp-container .jdp-year input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark site-header">

@@ -56,14 +56,13 @@ require __DIR__ . '/includes/layout/header.php';
                                         <span class="service-icon"><i class="flaticon-cloud-computing"></i></span>
                                         <h3><a href="<?= e(base_url('course.php?slug=' . urlencode($c['slug']))) ?>"><?= e($c['title']) ?></a></h3>
                                         <p><?= e(mb_substr(strip_tags($c['description'] ?? ''), 0, 80)) ?>...</p>
-										<p class="small text-muted mb-2">
-    <i class="bi bi-clock"></i> <?= (int)($course['session_count'] ?? 0) ?> جلسه &bull;
-   
-    <?php if (!empty($course['session_days'])): ?>
-        &bull; <?= e($course['session_days']) ?>
-    <?php endif; ?>
-</p>
-                                        
+                                        <!-- اصلاح: استفاده از $c به جای $course -->
+                                        <p class="small text-muted mb-2">
+                                            <i class="bi bi-clock"></i> <?= (int)($c['session_count'] ?? 0) ?> جلسه
+                                            <?php if (!empty($c['session_days'])): ?>
+                                                &bull; <?= e($c['session_days']) ?>
+                                            <?php endif; ?>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -74,12 +73,12 @@ require __DIR__ . '/includes/layout/header.php';
 
             <!-- سایدبار راست: جستجو + دسته‌بندی -->
             <div class="col-lg-4">
-                <div class="sidebar">
+                <div class="sidebar sidebar-sticky">
                     <!-- جستجو -->
                     <div class="sidebar-widget search-box">
                         <div class="form-group">
                             <input type="search" name="search" id="searchInput" class="form-control" placeholder="جستجوی دوره..." value="<?= e($search) ?>">
-                            <button type="submit" id="searchBtn"><i class="flaticon-search"></i></button>
+                            <button type="button" id="searchBtn"><i class="flaticon-search"></i></button>
                         </div>
                         <?php if (!empty($search) || !empty($categorySlug)): ?>
                             <div class="mt-2">
@@ -109,15 +108,22 @@ require __DIR__ . '/includes/layout/header.php';
 </section>
 
 <script>
+// جستجو با کلیک روی دکمه یا زدن Enter
 document.getElementById('searchBtn')?.addEventListener('click', function() {
-    let searchVal = document.getElementById('searchInput').value;
-    let url = new URL(window.location.href);
-    if (searchVal) url.searchParams.set('search', searchVal);
-    else url.searchParams.delete('search');
+    var searchVal = document.getElementById('searchInput').value.trim();
+    var url = new URL(window.location.href);
+    if (searchVal !== '') {
+        url.searchParams.set('search', searchVal);
+    } else {
+        url.searchParams.delete('search');
+    }
     window.location.href = url.toString();
 });
+
 document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') document.getElementById('searchBtn').click();
+    if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+    }
 });
 </script>
 

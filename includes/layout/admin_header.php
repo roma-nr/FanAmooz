@@ -17,6 +17,15 @@ $activeMenu = $activeMenu ?? '';
     <link href="<?= e(asset_url('css/theme.css')) ?>" rel="stylesheet">
 	<script src="https://cdn.tiny.cloud/1/2qs136k1557c1jpyp2fial85xmrjnc9e78srprpvwf4dou73/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
+
+
+
+
+
+<link rel="stylesheet" href="<?= asset_url('css/jalalidatepicker.min.css') ?>">
+<script src="<?= asset_url('js/jalalidatepicker.min.js') ?>"></script>
+
+
 <style>
     @media (max-width: 991.98px) {
         .admin-sidebar {
@@ -48,6 +57,26 @@ $activeMenu = $activeMenu ?? '';
             display: block;
         }
     }
+	/* اصلاح سایز فونت در تقویم جلالی */
+jdp-container {
+    font-size: 12px;               /* فونت کلی کوچک‌تر */
+}
+jdp-container .jdp-day,
+jdp-container .jdp-day-name {
+    height: 28px;                  /* ارتفاع سلول‌های روز */
+    line-height: 28px;
+}
+jdp-container .jdp-month select,
+jdp-container .jdp-year select,
+jdp-container .jdp-time select {
+    font-size: 10px;               /* فونت داخل selectهای ماه/سال */
+    padding: 2px 4px;
+    transition: none !important;   /* حذف افکت پررنگ/کمرنگ */
+}
+jdp-container .jdp-month:hover,
+jdp-container .jdp-year:hover {
+    filter: none !important;       /* غیرفعال کردن hover که چشمک می‌زند */
+}
 </style>
 <script>
     document.addEventListener('DOMContentLoaded', function() {

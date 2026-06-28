@@ -6,17 +6,25 @@ require __DIR__ . '/includes/layout/header.php';
 require_once __DIR__ . '/includes/carousel.php';
 $pageTitle = 'صفحه اصلی';
 
-// دریافت داده‌ها
 $courses = home_courses();
 $announcements = home_announcements();
 $usefulLinks = home_useful_links();
-
-
-
 ?>
 
+<style>
+/* جلوگیری از انتخاب متن هنگام swipe */
+.owl-carousel, .owl-carousel * {
+    user-select: none;
+    -webkit-user-select: none;
+}
+/* سایدبار چسبان */
+.sidebar-sticky {
+    position: sticky;
+    top: 90px;
+}
 
-<!-- ========== کروسل دوره‌ها + سایدبار لینک‌های مفید ========== -->
+</style>
+
 <section class="pt-100 pb-75">
     <div class="container">
         <div class="row">
@@ -29,71 +37,51 @@ $usefulLinks = home_useful_links();
                 <?php if (empty($courses)): ?>
                     <div class="alert alert-info">هنوز دوره‌ای برای نمایش وجود ندارد.</div>
                 <?php else: ?>
-				<div id="courseCarousel" class="carousel slide" data-bs-ride="carousel">
-    <div class="carousel-inner">
-        <?php 
-        $chunks = array_chunk($courses, 3);
-        foreach ($chunks as $index => $chunk): 
-        ?>
-            <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                <div class="row g-3">
-                    <?php foreach ($chunk as $course): ?>
-                        <div class="col-md-4">
-                            
-    <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
-                                <?php $img = $course['image'] ? upload_url($course['image']) : asset_url('img/courses/course-placeholder.jpg'); ?>
-                                <img src="<?= e($img) ?>" class="card-img-top" style="height: 180px; object-fit: cover;" alt="">
-                                <div class="card-body text-center">
-                                    <a href="<?= e(base_url('course.php?slug=' . urlencode($course['slug']))) ?>"><h5 class="card-title"><?= e($course['title']) ?></h5></a>
-                                    <p class="small text-muted"><?= e($course['teacher_name'] ?? '') ?></p>
-                                    <p class="small text-muted">
-                                        <i class="bi bi-clock"></i> <?= (int)($course['session_count'] ?? 0) ?> جلسه
-                                    </p>
-                                   
+                    <div class="owl-carousel owl-theme" id="courseOwl">
+                        <?php foreach ($courses as $course): ?>
+                            <div class="item px-2">
+                                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                                    <?php $img = $course['image'] ? upload_url($course['image']) : asset_url('img/courses/course-placeholder.jpg'); ?>
+                                    <img src="<?= e($img) ?>" class="card-img-top" style="height: 180px; object-fit: cover;" alt="">
+                                    <div class="card-body text-center">
+                                        <a href="<?= e(base_url('course.php?slug=' . urlencode($course['slug']))) ?>"><h5 class="card-title"><?= e($course['title']) ?></h5></a>
+                                        <p class="small text-muted"><?= e($course['teacher_name'] ?? '') ?></p>
+                                        <p class="small text-muted"><i class="bi bi-clock"></i> <?= (int)($course['session_count'] ?? 0) ?> جلسه</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    
-</div>
-                    
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
-			<!-- کروسل دوره‌ها با Bootstrap -->
-
 
             <div class="col-lg-4">
-                <div class="sidebar-widget categories" style="background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
-                    <h4>لینک‌های مفید</h4>
-                    <div class="category-box style1">
-                        <ul class="list-style">
-                            <?php if (empty($usefulLinks)): ?>
-                                <li>لینکی ثبت نشده است.</li>
-                            <?php else: ?>
-                                <?php foreach ($usefulLinks as $link): ?>
-                                    <li>
-                                        <a href="<?= e($link['url']) ?>" target="_blank" rel="noopener">
-                                            <i class="ri-arrow-right-s-line"></i>
-                                            <?= e($link['title']) ?>
-                                            <?php if (!empty($link['description'])): ?>
-                                                <span class="small">- <?= e(mb_substr($link['description'], 0, 40)) ?></span>
-                                            <?php endif; ?>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </ul>
+                <div class="sidebar sidebar-sticky">
+                    <div class="sidebar-widget categories" style="background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+                        <h4>لینک‌های مفید</h4>
+                        <div class="category-box style1">
+                            <ul class="list-style">
+                                <?php if (empty($usefulLinks)): ?>
+                                    <li>لینکی ثبت نشده است.</li>
+                                <?php else: ?>
+                                    <?php foreach ($usefulLinks as $link): ?>
+                                        <li>
+                                            <a href="<?= e($link['url']) ?>" target="_blank" rel="noopener">
+                                                <i class="ri-arrow-right-s-line"></i>
+                                                <?= e($link['title']) ?>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-<!-- ========== ویژگی‌های سایت (۴ مورد) ========== -->
+
 <section class="py-5 bg-white">
     <div class="container">
         <div class="row g-4">
@@ -129,49 +117,6 @@ $usefulLinks = home_useful_links();
     </div>
 </section>
 
-<!-- ========== آمار سایت ========== -->
-<!--<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row g-4">
-            <?php
-            $studentCount = db()->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn();
-            $teacherCount = db()->query("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND teacher_status = 'approved'")->fetchColumn();
-            $courseCount = db()->query("SELECT COUNT(*) FROM courses WHERE status = 'published'")->fetchColumn();
-            $certificateCount = db()->query("SELECT COUNT(*) FROM certificate_requests WHERE status = 'approved'")->fetchColumn();
-            ?>
-            <div class="col-6 col-md-3">
-                <div class="text-center p-3 rounded-4 bg-danger bg-opacity-10">
-                    <i class="bi bi-people fs-1 text-danger"></i>
-                    <div class="fs-3 fw-bold text-danger"><?= number_format($studentCount) ?></div>
-                    <div class="small text-muted">دانشجو</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="text-center p-3 rounded-4 bg-success bg-opacity-10">
-                    <i class="bi bi-person-badge fs-1 text-success"></i>
-                    <div class="fs-3 fw-bold text-success"><?= number_format($teacherCount) ?></div>
-                    <div class="small text-muted">استاد</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="text-center p-3 rounded-4 bg-warning bg-opacity-10">
-                    <i class="bi bi-book fs-1 text-warning"></i>
-                    <div class="fs-3 fw-bold text-warning"><?= number_format($courseCount) ?></div>
-                    <div class="small text-muted">دوره فعال</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="text-center p-3 rounded-4 bg-info bg-opacity-10">
-                    <i class="bi bi-award fs-1 text-info"></i>
-                    <div class="fs-3 fw-bold text-info"><?= number_format($certificateCount) ?></div>
-                    <div class="small text-muted">گواهی صادرشده</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>-->
-
-<!-- ========== کروسل مقالات / اطلاعیه‌ها (۴ تایی در دسکتاپ) ========== -->
 <section class="pb-100 bg-light">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -182,54 +127,79 @@ $usefulLinks = home_useful_links();
         <?php if (empty($announcements)): ?>
             <div class="alert alert-info text-center">هنوز مقاله‌ای ثبت نشده است.</div>
         <?php else: ?>
-            <div id="announcementCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <?php 
-                    $chunks = array_chunk($announcements, 4); // ۴ تایی در هر اسلاید
-                    foreach ($chunks as $index => $chunk): 
-                    ?>
-                        <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                            <div class="row g-3">
-                                <?php foreach ($chunk as $ann): ?>
-                                    <div class="col-md-6 col-lg-3">
-                                        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
-                                            <?php if ($ann['image']): ?>
-                                                <img src="<?= e(upload_url($ann['image'])) ?>" class="card-img-top" style="height: 150px; object-fit: cover;" alt="">
-                                            <?php else: ?>
-                                                <div class="bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="height: 150px;">
-                                                    <i class="bi bi-newspaper fs-1 text-secondary"></i>
-                                                </div>
-                                            <?php endif; ?>
-                                            <div class="card-body">
-                                                <span class="badge bg-primary mb-2">اطلاعیه</span>
-                                                <h6 class="card-title"><?= e(mb_substr($ann['title'], 0, 35)) ?></h6>
-                                                <p class="card-text small text-muted">
-                                                    <?= e(mb_substr(strip_tags($ann['summary'] ?? $ann['body'] ?? ''), 0, 60)) ?>...
-                                                </p>
-                                            </div>
-                                            <div class="card-footer bg-white border-0 text-muted small d-flex justify-content-between align-items-center">
-                                                <span><i class="bi bi-calendar3"></i> <?= e(format_date($ann['published_at'])) ?></span>
-                                                <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="btn btn-sm btn-outline-primary">ادامه مطلب</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
+            <div class="owl-carousel owl-theme" id="announcementOwl">
+                <?php foreach ($announcements as $ann): ?>
+                    <div class="item px-2">
+                        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                            <?php if ($ann['image']): ?>
+                                <img src="<?= e(upload_url($ann['image'])) ?>" class="card-img-top" style="height: 150px; object-fit: cover;" alt="">
+                            <?php else: ?>
+                                <div class="bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="height: 150px;">
+                                    <i class="bi bi-newspaper fs-1 text-secondary"></i>
+                                </div>
+                            <?php endif; ?>
+                            <div class="card-body">
+                                <span class="badge bg-primary mb-2">اطلاعیه</span>
+                                <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="link style1"><h6 class="card-title"><?= e(mb_substr($ann['title'], 0, 35)) ?></h6></a>
+                                <p class="card-text small text-muted"><?= e(mb_substr(strip_tags($ann['summary'] ?? $ann['body'] ?? ''), 0, 60)) ?>...</p>
+                            </div>
+                            <div class="card-footer bg-white border-0 text-muted small d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-calendar3"></i> <?= e(format_date($ann['published_at'])) ?></span>
+                                <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="btn btn-sm btn-outline-primary">ادامه مطلب</a>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <!-- دکمه‌های قبلی/بعدی -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#announcementCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">قبلی</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#announcementCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">بعدی</span>
-                </button>
+                    </div>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+
+    // ========== کروسل دوره‌ها (Owl) ==========
+    if ($("#courseOwl").length) {
+        $("#courseOwl").owlCarousel({
+            rtl: true,
+            loop: true,
+            margin: 10,
+            nav: true,
+            navText: ['<i class="bi bi-chevron-right"></i>', '<i class="bi bi-chevron-left"></i>'],
+            dots: false,
+            autoplay: true,
+            autoplayTimeout: 5000,
+            autoplayHoverPause: true,
+            slideBy: 1,
+            responsive: {
+                0: { items: 1 },
+                768: { items: 2 },
+                992: { items: 3 }
+            }
+        });
+    }
+
+    // ========== کروسل اطلاعیه‌ها (Owl) ==========
+    if ($("#announcementOwl").length) {
+        $("#announcementOwl").owlCarousel({
+            rtl: true,
+            loop: true,
+            margin: 10,
+            nav: true,
+            navText: ['<i class="bi bi-chevron-right"></i>', '<i class="bi bi-chevron-left"></i>'],
+            dots: false,
+            autoplay: true,
+            autoplayTimeout: 6000,
+            slideBy: 1,
+            responsive: {
+                0: { items: 1 },
+                576: { items: 2 },
+                992: { items: 4 }
+            }
+        });
+    }
+});
+</script>
+
 <?php require __DIR__ . '/includes/layout/footer.php'; ?>

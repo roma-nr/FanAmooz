@@ -85,26 +85,26 @@ function format_price(int|float|string $amount): string
     return number_format((float) $amount, 0, '.', ',') . ' تومان';
 }
 
+
 function format_date(?string $datetime): string
 {
-    if ($datetime === null || $datetime === '') {
-        return '—';
-    }
-
+    if ($datetime === null || $datetime === '') return '—';
     $ts = strtotime($datetime);
+    if (!$ts) return '—';
 
-    return $ts ? date('Y/m/d', $ts) : '—';
+    // استفاده از تابع jdate کتابخانه jdf با fallback ایمن
+    $result = jdate('Y/m/d', $ts);
+    return ($result === null || $result === '') ? date('Y/m/d', $ts) : $result;
 }
 
 function format_datetime(?string $datetime): string
 {
-    if ($datetime === null || $datetime === '') {
-        return '—';
-    }
-
+    if ($datetime === null || $datetime === '') return '—';
     $ts = strtotime($datetime);
+    if (!$ts) return '—';
 
-    return $ts ? date('Y/m/d H:i', $ts) : '—';
+    $result = jdate('Y/m/d H:i', $ts);
+    return ($result === null || $result === '') ? date('Y/m/d H:i', $ts) : $result;
 }
 
 function slugify(string $text): string

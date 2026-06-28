@@ -27,25 +27,30 @@ require __DIR__ . '/includes/layout/header.php';
                 <?php if (empty($announcements)): ?>
                     <div class="alert alert-info">هیچ اطلاعیه‌ای یافت نشد.</div>
                 <?php else: ?>
-                    <div class="row">
+                    <div class="row" id="announcementsContainer">
                         <?php foreach ($announcements as $ann): ?>
                             <div class="col-md-6 col-xl-6">
-                                <div class="blog-card style1">
-                                    <div class="blog-img">
-                                        <?php if ($ann['image']): ?>
-                                            <img src="<?= e(upload_url($ann['image'])) ?>" alt="<?= e($ann['title']) ?>">
-                                        <?php else: ?>
-                                            <img src="<?= e(asset_url('img/blog-placeholder.jpg')) ?>" alt="image">
-                                        <?php endif; ?>
+                                <!-- کلاس blog-card اضافه شد -->
+                                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden blog-card">
+                                    <?php if ($ann['image']): ?>
+                                        <img src="<?= e(upload_url($ann['image'])) ?>" class="card-img-top" style="height: 150px; object-fit: cover;" alt="">
+                                    <?php else: ?>
+                                        <div class="bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" style="height: 150px;">
+                                            <i class="bi bi-newspaper fs-1 text-secondary"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="card-body">
+                                        <span class="badge bg-primary mb-2">اطلاعیه</span>
+                                        <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="link style1">
+                                            <h6 class="card-title"><?= e(mb_substr($ann['title'], 0, 35)) ?></h6>
+                                        </a>
+                                        <p class="card-text small text-muted">
+                                            <?= e(mb_substr(strip_tags($ann['summary'] ?? $ann['body'] ?? ''), 0, 60)) ?>...
+                                        </p>
                                     </div>
-                                    <div class="blog-info">
-                                        <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="blog-category">اطلاعیه</a>
-                                        <ul class="blog-metainfo list-style">
-                                            <li><i class="flaticon-calendar-2"></i> <?= e(format_date($ann['published_at'])) ?></li>
-                                        </ul>
-                                        <h3><a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>"><?= e($ann['title']) ?></a></h3>
-                                        <p><?= e(mb_substr(strip_tags($ann['summary'] ?? $ann['body'] ?? ''), 0, 80)) ?>...</p>
-                                        <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="link style1">ادامه مطلب <i class="flaticon-right-arrow"></i></a>
+                                    <div class="card-footer bg-white border-0 text-muted small d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-calendar3"></i> <?= e(format_date($ann['published_at'])) ?></span>
+                                        <a href="<?= e(base_url('blog-details.php?id=' . $ann['id'])) ?>" class="btn btn-sm btn-outline-primary">ادامه مطلب</a>
                                     </div>
                                 </div>
                             </div>
@@ -56,12 +61,12 @@ require __DIR__ . '/includes/layout/header.php';
 
             <!-- سایدبار راست -->
             <div class="col-lg-4">
-                <div class="sidebar">
-                    <!-- جستجو (اختیاری) -->
+                <div class="sidebar sidebar-sticky">
+                    <!-- جستجو -->
                     <div class="sidebar-widget search-box">
                         <div class="form-group">
                             <input type="search" placeholder="جستجو در اطلاعیه‌ها..." id="searchInput">
-                            <button type="submit"><i class="flaticon-search"></i></button>
+                            <button type="button" id="searchButton"><i class="flaticon-search"></i></button>
                         </div>
                     </div>
                     
@@ -109,20 +114,42 @@ require __DIR__ . '/includes/layout/header.php';
 </section>
 
 <script>
-// جستجوی ساده با جاوااسکریپت (فیلتر کردن اطلاعیه‌ها بدون رفرش)
-document.getElementById('searchInput')?.addEventListener('keyup', function() {
-    let filter = this.value.toLowerCase();
-    let cards = document.querySelectorAll('.blog-card');
-    cards.forEach(card => {
-        let title = card.querySelector('h3 a')?.innerText.toLowerCase() || '';
-        let text = card.querySelector('p')?.innerText.toLowerCase() || '';
-        if (title.includes(filter) || text.includes(filter)) {
-            card.closest('.col-md-6').style.display = '';
-        } else {
-            card.closest('.col-md-6').style.display = 'none';
-        }
-    });
-});
+(function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    
+    function filterAnnouncements() {
+        const filter = (searchInput.value || '').toLowerCase().trim();
+        const cards = document.querySelectorAll('.blog-card');
+        
+        cards.forEach(card => {
+            // عنوان داخل h6.card-title
+            const titleEl = card.querySelector('.card-title');
+            // متن کوتاه داخل p.card-text
+            const textEl = card.querySelector('.card-text');
+            
+            const title = titleEl ? titleEl.innerText.toLowerCase() : '';
+            const text = textEl ? textEl.innerText.toLowerCase() : '';
+            
+            // والد col-md-6
+            const parentCol = card.closest('.col-md-6');
+            if (parentCol) {
+                if (filter === '' || title.includes(filter) || text.includes(filter)) {
+                    parentCol.style.display = '';
+                } else {
+                    parentCol.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keyup', filterAnnouncements);
+    }
+    if (searchButton) {
+        searchButton.addEventListener('click', filterAnnouncements);
+    }
+})();
 </script>
 
 <?php require __DIR__ . '/includes/layout/footer.php'; ?>

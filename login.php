@@ -39,7 +39,7 @@ require __DIR__ . '/includes/layout/header.php';
 ?>
 
 <div class="container py-5" style="max-width:440px">
-    <div class="card login-card border-0 shadow">
+    <div class=" login-card border-0 shadow">
         <div class="card-body p-4">
             <h1 class="h4 text-center text-primary mb-4">ورود به <?= e(site_name()) ?></h1>
 

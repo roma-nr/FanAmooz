@@ -49,29 +49,19 @@ if (is_post() && verify_csrf()) {
         $description = trim($_POST['description'] ?? '');
         $sortOrder = (int) ($_POST['sort_order'] ?? 0);
         
-        // فیلدهای جدید (لینک و زمان کلاس آنلاین)
         $adobeConnectUrl = trim($_POST['adobe_connect_url'] ?? '');
         $scheduledAt = trim($_POST['scheduled_at'] ?? '') ?: null;
 
         if ($title === '') {
             $errors['title'] = 'عنوان جلسه الزامی است.';
         }
-        
-        // اعتبارسنجی لینک (اگر وارد شده باشد)
         if ($adobeConnectUrl !== '' && !validate_url($adobeConnectUrl)) {
-            $errors['adobe_connect_url'] = 'لینک Adobe Connect معتبر نیست (با http:// یا https:// شروع شود).';
+            $errors['adobe_connect_url'] = 'لینک Adobe Connect معتبر نیست.';
         }
 
-        // فایل‌ها
         $video = $edit['video_path'] ?? null;
         $audio = $edit['audio_path'] ?? null;
         $pdf = $edit['pdf_path'] ?? null;
-
-        // بررسی مهلت آپلود ویدئو (۲ روز بعد از کلاس)
-        $uploadDeadline = null;
-        if ($scheduledAt) {
-            $uploadDeadline = date('Y-m-d H:i:s', strtotime($scheduledAt . ' +2 days'));
-        }
 
         if (!empty($_FILES['video']['name'])) {
             if ($video) delete_upload($video);
@@ -87,30 +77,14 @@ if (is_post() && verify_csrf()) {
         }
 
         if (empty($errors)) {
-            $fields = [
-                $title, $sessionNumber, $description, 
-                $video, $audio, $pdf, $sortOrder,
-                $adobeConnectUrl, $scheduledAt
-            ];
+            $fields = [$title, $sessionNumber, $description, $video, $audio, $pdf, $sortOrder, $adobeConnectUrl, $scheduledAt];
             if ($id > 0) {
                 $fields[] = $id;
                 $fields[] = $courseId;
-                db()->prepare("
-                    UPDATE course_sessions 
-                    SET title=?, session_number=?, description=?, 
-                        video_path=?, audio_path=?, pdf_path=?, sort_order=?,
-                        adobe_connect_url=?, scheduled_at=?
-                    WHERE id=? AND course_id=?
-                ")->execute($fields);
+                db()->prepare("UPDATE course_sessions SET title=?, session_number=?, description=?, video_path=?, audio_path=?, pdf_path=?, sort_order=?, adobe_connect_url=?, scheduled_at=? WHERE id=? AND course_id=?")->execute($fields);
                 flash('success', 'جلسه ویرایش شد.');
             } else {
-                db()->prepare("
-                    INSERT INTO course_sessions 
-                    (course_id, title, session_number, description, 
-                     video_path, audio_path, pdf_path, sort_order,
-                     adobe_connect_url, scheduled_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?)
-                ")->execute(array_merge([$courseId], $fields));
+                db()->prepare("INSERT INTO course_sessions (course_id, title, session_number, description, video_path, audio_path, pdf_path, sort_order, adobe_connect_url, scheduled_at) VALUES (?,?,?,?,?,?,?,?,?,?)")->execute(array_merge([$courseId], $fields));
                 flash('success', 'جلسه افزوده شد.');
             }
             redirect(base_url('teacher/sessions.php?course_id=' . $courseId));
@@ -121,8 +95,6 @@ if (is_post() && verify_csrf()) {
 }
 
 $sessions = course_sessions_list($courseId);
-
-// دریافت تاریخ جلسات برای نمایش مهلت
 foreach ($sessions as &$s) {
     $deadline = null;
     if ($s['scheduled_at']) {
@@ -134,6 +106,16 @@ foreach ($sessions as &$s) {
 
 require dirname(__DIR__) . '/includes/layout/teacher_header.php';
 ?>
+
+<style>
+/* تقویم جلالی – تنظیمات فونت و hover */
+jdp-container { font-size: 12px !important; }
+jdp-container .jdp-day, jdp-container .jdp-day-name { height: 28px !important; line-height: 28px !important; }
+jdp-container .jdp-month select, jdp-container .jdp-year select, jdp-container .jdp-time select { font-size: 12px !important; padding: 2px 4px !important; transition: none !important; }
+jdp-container .jdp-month:hover, jdp-container .jdp-year:hover { filter: none !important; }
+jdp-container .jdp-year input[type="number"]::-webkit-inner-spin-button,
+jdp-container .jdp-year input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
 
 <p class="mb-3"><a href="courses.php" class="text-decoration-none">&larr; بازگشت به دوره‌ها</a></p>
 <h1 class="h4 text-primary mb-1">مدیریت جلسات - <?= e($course['title']) ?></h1>
@@ -157,10 +139,8 @@ require dirname(__DIR__) . '/includes/layout/teacher_header.php';
 
                     <div class="mb-2">
                         <label class="form-label">عنوان جلسه <span class="text-danger">*</span></label>
-                        <input name="title" class="form-control <?= isset($errors['title']) ? 'is-invalid' : '' ?>" value="<?= old('title', $edit['title'] ?? '') ?>">
-                        <div class="invalid-feedback"><?= $errors['title'] ?? '' ?></div>
+                        <input name="title" class="form-control" value="<?= old('title', $edit['title'] ?? '') ?>">
                     </div>
-
                     <div class="row g-2">
                         <div class="col-6">
                             <label class="form-label">شماره جلسه</label>
@@ -171,57 +151,44 @@ require dirname(__DIR__) . '/includes/layout/teacher_header.php';
                             <input type="number" name="sort_order" class="form-control" value="<?= old('sort_order', $edit['sort_order'] ?? 0) ?>">
                         </div>
                     </div>
-
                     <div class="mb-2">
                         <label class="form-label">توضیحات</label>
                         <textarea name="description" class="form-control" rows="2"><?= old('description', $edit['description'] ?? '') ?></textarea>
                     </div>
 
                     <hr>
-                    <h6 class="text-primary">کلاس آنلاین (Adobe Connect) - اختیاری</h6>
+                    <h6 class="text-primary">کلاس آنلاین (Adobe Connect)</h6>
                     <div class="mb-2">
                         <label class="form-label">لینک Adobe Connect</label>
-                        <input name="adobe_connect_url" class="form-control <?= isset($errors['adobe_connect_url']) ? 'is-invalid' : '' ?>" dir="ltr" placeholder="https://..." value="<?= old('adobe_connect_url', $edit['adobe_connect_url'] ?? '') ?>">
-                        <div class="invalid-feedback"><?= $errors['adobe_connect_url'] ?? '' ?></div>
-                        <small class="text-muted">در صورت برگزاری کلاس آنلاین، لینک را وارد کنید.</small>
+                        <input name="adobe_connect_url" class="form-control" dir="ltr" placeholder="https://..." value="<?= old('adobe_connect_url', $edit['adobe_connect_url'] ?? '') ?>">
                     </div>
                     <div class="mb-2">
                         <label class="form-label">زمان برگزاری کلاس</label>
-                        <input type="datetime-local" name="scheduled_at" class="form-control" value="<?= $edit && $edit['scheduled_at'] ? date('Y-m-d\TH:i', strtotime($edit['scheduled_at'])) : '' ?>">
-                        <small class="text-muted">در صورت برگزاری کلاس آنلاین، زمان را تنظیم کنید. ویدئو تا ۲ روز بعد از این زمان باید آپلود شود.</small>
+                        <input type="text" id="session-datetime" class="form-control" placeholder="انتخاب زمان شمسی ..."
+                               value="<?= $edit && $edit['scheduled_at'] ? jdate('Y/m/d H:i', strtotime($edit['scheduled_at'])) : '' ?>"
+                               autocomplete="off">
+                        <input type="hidden" name="scheduled_at" id="scheduled_at" value="<?= e($edit['scheduled_at'] ?? '') ?>">
+                        <small class="text-muted">ویدئو تا ۲ روز بعد از این زمان باید آپلود شود.</small>
                     </div>
 
                     <hr>
                     <h6 class="text-primary">محتوای جلسه</h6>
                     <div class="mb-2">
-                        <label class="form-label">ویدئو <span class="text-danger">* (در صورت وجود کلاس آنلاین، تا ۲ روز پس از کلاس)</span></label>
+                        <label class="form-label">ویدئو</label>
                         <input type="file" name="video" class="form-control" accept="video/*,.mp4,.webm">
-                        <small class="text-muted">حداکثر ۲۰۰ مگابایت. در صورت برگزاری کلاس آنلاین، حتماً تا ۲ روز بعد آپلود کنید.</small>
-                        <?php if ($edit && $edit['video_path']): ?>
-                            <div class="mt-1"><span class="badge bg-success">ویدئو آپلود شده</span></div>
-                        <?php endif; ?>
+                        <?php if ($edit && $edit['video_path']): ?><span class="badge bg-success mt-1">ویدئو آپلود شده</span><?php endif; ?>
                     </div>
-
                     <div class="mb-2">
-                        <label class="form-label">فایل PDF (اختیاری)</label>
+                        <label class="form-label">فایل PDF</label>
                         <input type="file" name="pdf" class="form-control" accept=".pdf">
-                        <?php if ($edit && $edit['pdf_path']): ?>
-                            <div class="mt-1"><span class="badge bg-secondary">PDF آپلود شده</span></div>
-                        <?php endif; ?>
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">فایل صوتی (اختیاری)</label>
+                        <label class="form-label">فایل صوتی</label>
                         <input type="file" name="audio" class="form-control" accept="audio/*,.mp3,.wav">
-                        <?php if ($edit && $edit['audio_path']): ?>
-                            <div class="mt-1"><span class="badge bg-info">صوت آپلود شده</span></div>
-                        <?php endif; ?>
                     </div>
 
                     <button class="btn btn-primary"><?= $edit ? 'ذخیره' : 'افزودن' ?></button>
-                    <?php if ($edit): ?>
-                        <a href="sessions.php?course_id=<?= $courseId ?>" class="btn btn-link">انصراف</a>
-                    <?php endif; ?>
+                    <?php if ($edit): ?><a href="sessions.php?course_id=<?= $courseId ?>" class="btn btn-link">انصراف</a><?php endif; ?>
                 </form>
             </div>
         </div>
@@ -241,31 +208,15 @@ require dirname(__DIR__) . '/includes/layout/teacher_header.php';
                             <strong>جلسه <?= (int) $s['session_number'] ?>:</strong> <?= e($s['title']) ?>
                             <?php if ($hasLive): ?>
                                 <span class="badge bg-primary">آنلاین</span>
-                                <small class="text-muted d-block">
-                                    زمان: <?= e(format_datetime($s['scheduled_at'])) ?>
-                                    <?php if ($s['adobe_connect_url']): ?>
-                                        <a href="<?= e($s['adobe_connect_url']) ?>" target="_blank" rel="noopener" class="text-primary">(ورود به کلاس)</a>
-                                    <?php endif; ?>
-                                </small>
+                                <small class="text-muted d-block">زمان: <?= e(format_datetime($s['scheduled_at'])) ?></small>
                             <?php endif; ?>
-                            
-                            <?php if ($s['description']): ?>
-                                <p class="small text-muted mb-1"><?= e(mb_substr($s['description'], 0, 120)) ?></p>
-                            <?php endif; ?>
-                            
                             <div class="small">
-                                <?php if ($s['video_path']): ?>
-                                    <span class="badge bg-success">ویدئو ✓</span>
-                                <?php elseif ($isExpired && $hasLive): ?>
-                                    <span class="badge bg-danger">مهلت آپلود ویدئو گذشته!</span>
-                                <?php elseif ($hasLive): ?>
-                                    <span class="badge bg-warning text-dark">منتظر ویدئو (تا ۲ روز)</span>
-                                <?php else: ?>
-                                    <span class="badge bg-secondary">بدون ویدئو</span>
-                                <?php endif; ?>
+                                <?php if ($s['video_path']): ?><span class="badge bg-success">ویدئو ✓</span>
+                                <?php elseif ($isExpired && $hasLive): ?><span class="badge bg-danger">مهلت گذشته!</span>
+                                <?php elseif ($hasLive): ?><span class="badge bg-warning text-dark">منتظر ویدئو</span>
+                                <?php else: ?><span class="badge bg-secondary">بدون ویدئو</span><?php endif; ?>
                                 <?php if ($s['audio_path']): ?><span class="badge bg-info">صوت</span><?php endif; ?>
                                 <?php if ($s['pdf_path']): ?><span class="badge bg-secondary">PDF</span><?php endif; ?>
-                                <?php if ($s['adobe_connect_url']): ?><span class="badge bg-primary">لینک کلاس</span><?php endif; ?>
                             </div>
                         </div>
                         <div class="text-nowrap ms-2">
@@ -286,5 +237,32 @@ require dirname(__DIR__) . '/includes/layout/teacher_header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function zeroPad(num) { return num.toString().padStart(2, '0'); }
+
+    // زمان جلسه (date-time)
+    var sessionInput = document.getElementById('session-datetime');
+    var scheduledHidden = document.getElementById('scheduled_at');
+    if (sessionInput) {
+        jalaliDatepicker.startWatch({
+            selector: '#session-datetime',
+            type: 'date-time',
+            timeFormat: 'HH:mm',
+            onChange: function(e) {
+                if (e._date) {
+                    var g = e._date.toGregorian();
+                    var dateStr = g.year + '-' + zeroPad(g.month) + '-' + zeroPad(g.day);
+                    var timeStr = zeroPad(e._date.getHours()) + ':' + zeroPad(e._date.getMinutes());
+                    scheduledHidden.value = dateStr + ' ' + timeStr;
+                } else {
+                    scheduledHidden.value = '';
+                }
+            }
+        });
+    }
+});
+</script>
 
 <?php require dirname(__DIR__) . '/includes/layout/teacher_footer.php'; ?>

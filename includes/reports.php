@@ -29,7 +29,7 @@ function report_enrollments_by_province(): array
          FROM enrollments e
          JOIN users u ON u.id = e.user_id
          LEFT JOIN provinces p ON p.id = u.province_id
-         WHERE e.status IN ('active','completed','pending_payment','waiting_approval')
+         WHERE e.status IN ('active','completed','pending')
          GROUP BY p.id, p.name
          ORDER BY enrollment_count DESC"
     );
@@ -45,7 +45,7 @@ function report_enrollments_by_institution(): array
          JOIN users u ON u.id = e.user_id
          JOIN institutions i ON i.id = u.institution_id
          JOIN provinces p ON p.id = i.province_id
-         WHERE e.status IN ('active','completed','pending_payment','waiting_approval')
+         WHERE e.status IN ('active','completed','pending')
          GROUP BY i.id, i.name, p.name
          ORDER BY enrollment_count DESC
          LIMIT 50"
@@ -75,7 +75,7 @@ function report_enrollments_by_course(): array
                 COUNT(e.id) AS enrollment_count,
                 SUM(CASE WHEN e.status = 'completed' THEN 1 ELSE 0 END) AS completed_count
          FROM courses c
-         LEFT JOIN enrollments e ON e.course_id = c.id AND e.status IN ('active','completed','pending_payment','waiting_approval')
+         LEFT JOIN enrollments e ON e.course_id = c.id AND e.status IN ('active','completed','pending')
          LEFT JOIN course_categories cat ON cat.id = c.category_id
          GROUP BY c.id, c.title, c.slug, c.price, c.is_paid, cat.name
          ORDER BY enrollment_count DESC
@@ -110,56 +110,36 @@ function report_teacher_applications_summary(): array
     return $out;
 }
 
-// جایگزین کامل برای گزارش پرداخت‌ها (فقط فیش‌های آپلودشده)
 function report_payments_summary(): array
 {
     $stmt = db()->query("
-        SELECT 
-            COUNT(*) AS total_paid,
-            COALESCE(SUM(c.price), 0) AS total_amount
-        FROM enrollments e
-        JOIN courses c ON c.id = e.course_id
-        WHERE c.is_paid = 1
-          AND e.receipt_path IS NOT NULL
-          AND e.status IN ('active', 'completed')
+        SELECT COUNT(*) AS paid_count, COALESCE(SUM(amount), 0) AS paid_total
+        FROM payments
+        WHERE status = 'paid'
     ");
     $paid = $stmt->fetch();
-    $pending = (int) db()->query("
-        SELECT COUNT(*) 
-        FROM enrollments e
-        JOIN courses c ON c.id = e.course_id
-        WHERE c.is_paid = 1 
-          AND e.receipt_path IS NOT NULL
-          AND e.status IN ('pending_payment', 'waiting_approval')
-    ")->fetchColumn();
-    $failed = (int) db()->query("
-        SELECT COUNT(*) 
-        FROM enrollments e
-        JOIN courses c ON c.id = e.course_id
-        WHERE c.is_paid = 1 
-          AND e.receipt_path IS NOT NULL
-          AND e.status = 'cancelled'
-    ")->fetchColumn();
+
+    $pending = (int) db()->query("SELECT COUNT(*) FROM payments WHERE status = 'pending'")->fetchColumn();
+    $failed  = (int) db()->query("SELECT COUNT(*) FROM payments WHERE status = 'failed'")->fetchColumn();
 
     return [
-        'paid_count' => (int) ($paid['total_paid'] ?? 0),
-        'paid_total' => (float) ($paid['total_amount'] ?? 0),
+        'paid_count'    => (int)($paid['paid_count'] ?? 0),
+        'paid_total'    => (float)($paid['paid_total'] ?? 0),
         'pending_count' => $pending,
-        'failed_count' => $failed,
+        'failed_count'  => $failed,
     ];
 }
 
 function report_recent_payments(int $limit = 20): array
 {
     return db()->prepare("
-        SELECT e.id AS enrollment_id, e.status, e.receipt_path, e.enrolled_at,
-               u.full_name, c.title AS course_title, c.price, c.is_paid
-        FROM enrollments e
-        JOIN users u ON u.id = e.user_id
+        SELECT p.id, p.amount, p.status, p.ref_id, p.paid_at, p.created_at,
+               u.full_name, c.title AS course_title
+        FROM payments p
+        JOIN users u ON u.id = p.user_id
+        JOIN enrollments e ON e.id = p.enrollment_id
         JOIN courses c ON c.id = e.course_id
-        WHERE c.is_paid = 1
-          AND e.receipt_path IS NOT NULL
-        ORDER BY e.enrolled_at DESC
+        ORDER BY p.created_at DESC
         LIMIT ?
     ")->execute([$limit])->fetchAll();
 }
@@ -167,13 +147,13 @@ function report_recent_payments(int $limit = 20): array
 function report_dashboard_extended(): array
 {
     return [
-        'students' => (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn(),
-        'teachers' => (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND teacher_status = 'approved'")->fetchColumn(),
-        'courses_published' => (int) db()->query("SELECT COUNT(*) FROM courses WHERE status = 'published'")->fetchColumn(),
+        'students'           => (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'student'")->fetchColumn(),
+        'teachers'           => (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND teacher_status = 'approved'")->fetchColumn(),
+        'courses_published'  => (int) db()->query("SELECT COUNT(*) FROM courses WHERE status = 'published'")->fetchColumn(),
         'enrollments_active' => (int) db()->query("SELECT COUNT(*) FROM enrollments WHERE status IN ('active','completed')")->fetchColumn(),
         'certificates_pending' => function_exists('pending_certificates_count') ? pending_certificates_count() : 0,
-        'teachers_pending' => (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND teacher_status = 'pending'")->fetchColumn(),
-        'payments' => report_payments_summary(),
-        'certificates' => report_certificate_summary(),
+        'teachers_pending'   => (int) db()->query("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND teacher_status = 'pending'")->fetchColumn(),
+        'payments'           => report_payments_summary(),
+        'certificates'       => report_certificate_summary(),
     ];
 }

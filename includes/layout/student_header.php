@@ -27,11 +27,11 @@ $activeMenu = $activeMenu ?? '';
         <div class="collapse navbar-collapse" id="stuNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link <?= $activeMenu === 'dashboard' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/index.php')) ?>">داشبورد</a></li>
-                
                 <li class="nav-item"><a class="nav-link <?= $activeMenu === 'assignments' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/assignments.php')) ?>">تکالیف</a></li>
                 <li class="nav-item"><a class="nav-link <?= $activeMenu === 'grades' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/grades.php')) ?>">نمرات</a></li>
                 <li class="nav-item"><a class="nav-link <?= $activeMenu === 'live' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/live_classes.php')) ?>">کلاس آنلاین</a></li>
                 <li class="nav-item"><a class="nav-link <?= $activeMenu === 'certificates' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/certificates.php')) ?>">گواهی‌ها</a></li>
+                <li class="nav-item"><a class="nav-link <?= $activeMenu === 'wallet' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/wallet.php')) ?>">کیف پول</a></li>
                 <li class="nav-item">
                     <a class="nav-link <?= $activeMenu === 'messages' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('student/messages.php')) ?>">
                         پیام‌ها

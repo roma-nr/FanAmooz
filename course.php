@@ -16,31 +16,31 @@ $enrollment = null;
 $canEnroll = false;
 $isLoggedIn = auth_check();
 $isTeacherOfThisCourse = ($isLoggedIn && (int)auth_id() === (int)$course['teacher_id']);
+$role = auth_role();
 
 if ($isLoggedIn) {
     $enrollment = student_enrollment((int) auth_id(), (int) $course['id']);
     // محدودیت مؤسسه فقط برای دانشجویان
-    if (auth_role() === 'student') {
+    if ($role === 'student') {
         $instStmt = db()->prepare('SELECT institution_id FROM users WHERE id = ?');
         $instStmt->execute([auth_id()]);
         $instId = $instStmt->fetchColumn();
         $visible = course_visible_to_student($course, $instId !== false ? (int) $instId : null);
     } else {
-        $visible = true; // اساتید محدودیت مؤسسه ندارند
+        $visible = true; // اساتید و ادمین محدودیت مؤسسه ندارند
     }
     $canEnroll = $visible
               && !$isTeacherOfThisCourse
-              && ($enrollment === null || $enrollment['status'] === 'pending_payment');
+              && ($enrollment === null || $enrollment['status'] === 'pending');
 }
 
 require __DIR__ . '/includes/layout/header.php';
 ?>
 
 <style>
-/* سایدبار چسبان با کمی فاصله از بالا */
 .sidebar-sticky {
     position: sticky;
-    top: 90px; /* می‌توانید بر اساس ارتفاع هدر تنظیم کنید */
+    top: 90px;
 }
 </style>
 
@@ -74,12 +74,13 @@ require __DIR__ . '/includes/layout/header.php';
                         </p>
                     </div>
 
-                    <?php if ($isLoggedIn && !$isTeacherOfThisCourse): ?>
+                    <?php if ($role === 'student'): ?>
+                        <!-- دانشجو -->
                         <?php if ($enrollment && in_array($enrollment['status'], ['active', 'completed'], true)): ?>
                             <a href="<?= e(base_url('student/my_course.php?slug=' . urlencode($course['slug']))) ?>" class="btn btn-success">ورود به محتوای دوره</a>
-                        <?php elseif ($enrollment && in_array($enrollment['status'], ['pending_payment', 'waiting_approval'])): ?>
-                            <div class="alert alert-warning">ثبت‌نام اولیه انجام شده؛ لطفاً فیش پرداخت را بارگذاری کنید.</div>
-                            <a href="<?= e(base_url('student/upload_receipt.php?enrollment_id=' . (int) $enrollment['id'])) ?>" class="btn btn-primary">آپلود فیش پرداخت</a>
+                        <?php elseif ($enrollment && $enrollment['status'] === 'pending'): ?>
+                            <div class="alert alert-warning">ثبت‌نام اولیه انجام شده؛ لطفاً پرداخت را تکمیل کنید.</div>
+                            <a href="<?= e(base_url('student/pay.php?course_id=' . (int) $enrollment['id'])) ?>" class="btn btn-primary">تکمیل پرداخت</a>
                         <?php elseif ($canEnroll): ?>
                             <form method="post" action="<?= e(base_url('student/enroll.php')) ?>">
                                 <?= csrf_field() ?>
@@ -88,18 +89,33 @@ require __DIR__ . '/includes/layout/header.php';
                                     <?= (int) $course['is_paid'] ? 'ثبت‌نام و پرداخت' : 'ثبت‌نام رایگان' ?>
                                 </button>
                             </form>
+                            <div class="mt-3 alert alert-info small">
+                                <?php if ($course['status'] === 'published'): ?>
+                                    <strong>شرایط انصراف:</strong> دانشجوی گرامی، شما می‌توانید تا پیش از پایان ۲۵٪ جلسات دوره، درخواست انصراف دهید. در این صورت، کل مبلغ پرداختی به کیف پول شما بازگردانده خواهد شد. پس از گذشت ۲۵٪، امکان انصراف و بازگشت وجه وجود ندارد.
+                                <?php elseif ($course['status'] === 'archived'): ?>
+                                    این دوره به پایان رسیده و محتوای آن به‌صورت کامل در دسترس است. با توجه به آرشیو بودن دوره، امکان انصراف و بازگشت وجه وجود ندارد.
+                                <?php endif; ?>
+                            </div>
                         <?php else: ?>
                             <div class="alert alert-secondary">این دوره برای شما قابل ثبت‌نام نیست یا قبلاً ثبت‌نام کرده‌اید.</div>
                         <?php endif; ?>
-                    <?php elseif ($isTeacherOfThisCourse): ?>
-                        <div class="alert alert-info">شما مدرس این دوره هستید.</div>
+
+                    <?php elseif ($role === 'teacher'): ?>
+                        <?php if ($isTeacherOfThisCourse): ?>
+                            <a href="<?= e(base_url('teacher/courses.php')) ?>" class="btn btn-primary">مدیریت دوره</a>
+                        <?php else: ?>
+                            <div class="alert alert-info">اساتید امکان ثبت‌نام در دوره‌ها را ندارند.</div>
+                        <?php endif; ?>
+
+                    <?php elseif ($role === 'admin'): ?>
+                        <div class="alert alert-info">شما مدیر سیستم هستید. ثبت‌نام از طریق پنل دانشجو امکان‌پذیر است.</div>
+
                     <?php else: ?>
                         <a href="<?= e(login_url()) ?>" class="btn btn-primary">ورود برای ثبت‌نام</a>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <!-- سایدبار چسبان -->
             <div class="col-xl-4">
                 <div class="sidebar sidebar-sticky">
                     <div class="sidebar-widget categories">
@@ -124,7 +140,7 @@ require __DIR__ . '/includes/layout/header.php';
                     <?php
                     $similarStmt = db()->prepare("
                         SELECT id, title, slug, image FROM courses
-                        WHERE status = 'published' AND category_id = ? AND id != ?
+                        WHERE status IN ('published','archived') AND category_id = ? AND id != ?
                         LIMIT 3
                     ");
                     $similarStmt->execute([$course['category_id'], $course['id']]);

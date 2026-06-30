@@ -378,6 +378,15 @@ function archive_course(int $courseId): void
         throw new RuntimeException('فقط دوره‌های در حال برگزاری می‌توانند آرشیو شوند.');
     }
 
+    // بررسی تعداد جلسات
+    $sessionCount = (int)$course['session_count'];
+    if ($sessionCount > 0) {
+        $actualSessions = (int)db()->prepare("SELECT COUNT(*) FROM course_sessions WHERE course_id = ?")->execute([$courseId])->fetchColumn();
+        if ($actualSessions < $sessionCount) {
+            throw new RuntimeException("تعداد جلسات ثبت‌شده ({$actualSessions}) کمتر از تعداد تعیین‌شده ({$sessionCount}) است. آرشیو ممکن نیست.");
+        }
+    }
+
     $pdo = db();
     $pdo->beginTransaction();
     try {
@@ -401,6 +410,91 @@ function archive_course(int $courseId): void
         // تغییر وضعیت دوره
         $pdo->prepare("UPDATE courses SET status = 'archived' WHERE id = ?")->execute([$courseId]);
         $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+}
+
+/**
+ * محاسبهٔ درصد پیشرفت دوره برای یک دانشجو
+ * بر اساس تعداد جلسات تعریف‌شده و جلساتی که زمان برگزاری آن‌ها گذشته است.
+ */
+function calculate_course_progress(int $courseId): float
+{
+    $course = course_by_id($courseId);
+    if (!$course || (int)$course['session_count'] === 0) return 0;
+
+    $totalSessions = (int)$course['session_count'];
+    $now = date('Y-m-d H:i:s');
+
+    // جلساتی که زمان برگزاری آن‌ها گذشته است (scheduled_at <= now)
+    $pastSessions = (int)db()->prepare(
+        "SELECT COUNT(*) FROM course_sessions
+         WHERE course_id = ? AND scheduled_at IS NOT NULL AND scheduled_at <= ?"
+    )->execute([$courseId, $now])->fetchColumn();
+
+    return round(($pastSessions / $totalSessions) * 100, 1);
+}
+
+/**
+ * بررسی می‌کند آیا دانشجو می‌تواند از دوره انصراف دهد.
+ */
+function can_cancel_enrollment(int $userId, int $courseId): array
+{
+    $enrollment = student_enrollment($userId, $courseId);
+    if (!$enrollment || !in_array($enrollment['status'], ['active'])) {
+        return ['can' => false, 'message' => 'وضعیت ثبت‌نام شما اجازهٔ انصراف نمی‌دهد.'];
+    }
+
+    $course = course_by_id($courseId);
+    if (!$course) return ['can' => false, 'message' => 'دوره یافت نشد.'];
+
+    // فقط دوره‌های در حال برگزاری (published) امکان انصراف دارند
+    if ($course['status'] !== 'published') {
+        return ['can' => false, 'message' => 'این دوره در حال برگزاری نیست و امکان انصراف وجود ندارد.'];
+    }
+
+    $progress = calculate_course_progress($courseId);
+
+    if ($progress < 25) {
+        return ['can' => true, 'progress' => $progress, 'message' => "شما تاکنون {$progress}٪ از جلسات را پشت سر گذاشته‌اید. در صورت انصراف، مبلغ پرداختی به کیف پول شما بازگردانده خواهد شد."];
+    } else {
+        return ['can' => false, 'progress' => $progress, 'message' => "متأسفانه بیش از ۲۵٪ ({$progress}٪) از جلسات سپری شده و امکان انصراف وجود ندارد."];
+    }
+}
+
+/**
+ * اجرای انصراف دانشجو:
+ * - تغییر وضعیت enrollment به cancelled
+ * - بازگرداندن وجه پرداخت‌شده به کیف پول
+ */
+function cancel_enrollment(int $userId, int $courseId): void
+{
+    $check = can_cancel_enrollment($userId, $courseId);
+    if (!$check['can']) {
+        throw new RuntimeException($check['message']);
+    }
+
+    $enrollment = student_enrollment($userId, $courseId);
+    $course = course_by_id($courseId);
+    $paidAmount = (int)db()->prepare(
+        "SELECT COALESCE(SUM(amount),0) FROM payments WHERE enrollment_id = ? AND status = 'paid'"
+    )->execute([$enrollment['id']])->fetchColumn();
+
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        // تغییر وضعیت به cancelled
+        $pdo->prepare("UPDATE enrollments SET status = 'cancelled' WHERE id = ?")->execute([$enrollment['id']]);
+
+        // بازگشت وجه
+        if ($paidAmount > 0) {
+            wallet_refund($userId, $paidAmount, 'بازگشت وجه انصراف از دوره: ' . $course['title']);
+        }
+
+        $pdo->commit();
+        flash('success', 'انصراف شما با موفقیت انجام شد و مبلغ به کیف پول شما بازگشت.');
     } catch (Throwable $e) {
         $pdo->rollBack();
         throw $e;

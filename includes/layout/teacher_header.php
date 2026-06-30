@@ -62,6 +62,7 @@ jdp-container .jdp-year input[type="number"]::-webkit-outer-spin-button { -webki
                 <li class="nav-item"><a class="nav-link <?= $activeMenu === 'dashboard' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('teacher/index.php')) ?>">داشبورد</a></li>
                 <?php if (teacher_session_status() === 'approved'): ?>
                     <li class="nav-item"><a class="nav-link <?= $activeMenu === 'courses' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('teacher/courses.php')) ?>">دوره‌های من</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $activeMenu === 'wallet' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('teacher/wallet.php')) ?>">کیف پول</a></li>
                     <li class="nav-item">
                         <a class="nav-link <?= $activeMenu === 'messages' ? 'active fw-bold' : '' ?>" href="<?= e(base_url('teacher/messages.php')) ?>">
                             پیام‌ها
